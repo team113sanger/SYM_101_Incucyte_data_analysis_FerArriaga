@@ -1,0 +1,777 @@
+---
+title: "Incucyte_graphs at guide level"
+author: "Fer A"
+date: "2025-07-08"
+last update: "2025-09-11"
+output: html_document
+---
+
+```{r}
+install.packages("renv")
+install.packages("FSA")
+install.packages("gridExtra")
+install.packages("reshape")
+install.packages("ggpubr")
+
+library(renv)
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(reshape)
+library(FSA)
+library(ggpubr)
+library(gridExtra)
+
+```
+
+```{r}
+renv::snapshot()
+
+```
+
+Biotype assignment for each target
+
+```{r}
+Targets_biotype<- read_excel ("~/Growth_assays-Incucytedata/Input/Targets_biotype.xlsx")
+```
+
+################################################################################
+# A549 cell line analysis 
+################################################################################
+
+1. Incucyte raw data: green objects and confluence
+
+```{r}
+green_objects_A549<-read_csv("~/Growth_assays-Incucytedata/Input/green_objects_A549.csv")
+
+confluence_A549<-read_csv("~/Growth_assays-Incucytedata/Input/confluence_A549.csv")
+```
+
+2. Average, sd and cv calculation for the two replicates per guide
+```{r}
+#Green objects
+green_objects_A549_summary<-green_objects_A549%>%
+  group_by(Time_point, gene, guide, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            cv=(sd_value/mean_value)*100,
+            .groups = "drop")
+#Confluence
+confluence_A549_summary<-confluence_A549%>%
+  group_by(Time_point, gene, guide)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            cv=(sd_value/mean_value)*100,
+            .groups = "drop")
+```
+
+3. Plots generation 
+
+```{r}
+#Green objects timeline 
+
+#Note:Green objects counts were normalized to the value at 12h. At this point the green objects started to be detectable.
+
+#Merging the data from 3 guides per target
+
+#Green objects
+green_objects_A549_target<-green_objects_A549%>%
+  group_by(Time_point, gene, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop")
+
+#Confluence
+confluence_A549_target<-confluence_A549%>%
+  group_by(Time_point, gene, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop")
+```
+
+
+```{r}
+#Timeline graph:green objects (all)
+go_A549_plot<-ggplot(green_objects_A549_target, aes(x = Time_point, y = mean_value, color = gene, shape = biotype)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_x_continuous(limits = c(12, 48), breaks = seq(0, 48, by = 6))+
+  scale_y_continuous(limits = c(0, 7), breaks = seq(0, 7, by = 1)) +
+  theme_minimal() +
+  labs(title = "Green objects-A549Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Green objects count normalized to 12h",
+       color = "Biotype",
+       shape = "Biotype") +  # Keep biotype as shape legend
+  theme(strip.text = element_text(size = 10, face = "bold"), text = element_text(size=6), 
+         panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+#Save the plot
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_A549_all.pdf", 
+       plot = go_A549_plot, 
+       width = 10, height = 8)
+```
+
+
+#Paper (selected targets)
+
+```{r}
+green_objects_A549_paper<- green_objects_A549_target%>%
+  filter(Time_point<=48, 
+  gene %in% c("NTControl2", "DTX2", "RPS16", "PPIA.TR1","PPIA.TR2", "SNHG6.TR1", "SNHG6.TR2"))  
+
+
+# Ensure Time_point is numeric
+green_objects_A549_paper <- green_objects_A549_paper %>%
+  mutate(Time_point = as.numeric(as.character(Time_point)))
+
+# Define shapes manually
+shape_mapping <- c("NTControl2" = 15,  # square
+                   "NEG" = 17,        # triangle
+                   "CEG" = 16,        # circle
+                   "LncRNA" = 18,      # diamond 
+                   "Protein-coding gene"= 24 )    
+
+# Prepare labels: take the last time point for each gene
+labels_on_line <- green_objects_A549_paper %>%
+  group_by(gene) %>%
+  filter(Time_point == max(Time_point)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(label_x = Time_point + 0.5)  # small offset to the right
+
+# Plot
+go_A549_plot_paper<-ggplot(green_objects_A549_paper, aes(x = Time_point, y = mean_value, color = gene, group = gene)) +
+  geom_line() +
+  geom_point(aes(shape = biotype), size = 4) +
+  scale_shape_manual(values = shape_mapping) +
+  geom_text(data = labels_on_line,
+            aes(x = label_x, y = mean_value, label = gene),
+            hjust = 0, size = 4, show.legend = FALSE) +
+  scale_x_continuous(limits = c(12, 50), breaks = seq(12, 48, by = 6)) +  # extend limit to show labels
+  scale_y_continuous(limits = c(0, 7), breaks = seq(0, 7, by = 1)) +
+  theme_minimal() +
+  labs(title = "Green objects-A549Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Green objects count normalized to 12h",
+       color = "Gene",
+       shape = "Biotype") +
+  theme(strip.text = element_text(size = 12, face = "bold"),
+        text = element_text(size = 12),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
+```
+
+
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_A549_paper.pdf", 
+       plot = go_A549_plot_paper, 
+       width = 10, height = 8)
+
+```
+
+Barplot 
+```{r}
+#Green objects at 48h (when confluence  for NT and NEG is ~100%)
+
+#TP=48h
+
+# Step 1: Filter and create gene_guide column
+go_filtered_A549_48 <- green_objects_A549 %>%
+  filter(Time_point == 48) %>%
+  unite(gene_guide, gene, guide, sep = "_", remove = FALSE)
+
+# Step 2: Summarise mean and SD
+go_filtered_A549_48_summary <- go_filtered_A549_48 %>%
+  group_by(gene, guide, biotype) %>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop") %>%
+  unite(gene_guide, gene, guide, sep = "_", remove = FALSE)
+
+# Step 3: Define custom order for biotype
+biotype_order <- c("LncRNA", "Protein-coding gene", "CEG", "NEG", "NTControl2")
+
+# Step 4: Define custom order for gene_guide based on gene & g1-g3
+go_filtered_A549_48_summary <- go_filtered_A549_48_summary %>%
+  mutate(
+    guide = factor(guide, levels = c("g3", "g2", "g1")),
+    biotype = factor(biotype, levels = biotype_order)
+  ) %>%
+  arrange(biotype, gene, guide) %>%
+  mutate(gene_guide = factor(gene_guide, levels = unique(gene_guide)))
+
+# Match the same factor order in raw data for consistency
+go_filtered_A549_48 <- go_filtered_A549_48 %>%
+  mutate(gene_guide = factor(gene_guide, levels = levels(go_filtered_A549_48_summary$gene_guide)))
+
+# Step 5: Create the plot
+go_A549_plot_48 <- ggplot(go_filtered_A549_48_summary, aes(x = mean_value, y = gene_guide, fill = biotype)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  geom_errorbar(aes(xmin = mean_value - sd_value, xmax = mean_value + sd_value),
+                width = 0.3) +
+  geom_point(data = go_filtered_A549_48,
+             aes(x = value, y = gene_guide),
+             color = "black", size = 1.5,
+             position = position_jitter(width = 0.1, height = 0.1)) +
+  scale_x_continuous(limits = c(0, 10))+
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Green Objects - A549Cas13d cell line - 48 hours",
+    x = "Green Objects (Value at 48 Hours)",
+    y = "Gene_Guide",
+    fill = "Biotype"
+  ) +
+  scale_fill_brewer(palette = "Set2", drop = FALSE) +
+  theme(
+    axis.text.y = element_text(face = "italic"),
+    legend.position = "top"
+  )
+
+```
+
+#Save the plot
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_A549_48.pdf", 
+       plot = go_A549_plot_48, 
+       width = 10, height = 8)
+```
+
+```{r warning=FALSE}
+#Confluence Plot (NEG,CEG,NTControl)
+confluence_A549_filtered<- confluence_A549_target %>% 
+  filter(biotype %in% c("NEG", "CEG", "NTControl2"))
+
+
+conf_A549<-ggplot(confluence_A549_filtered, aes(x = Time_point, y = mean_value, color = gene, shape = biotype)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_x_continuous(limits = c(0, 48), breaks = seq(0, 48, by = 6))+
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10)) +
+  theme_minimal() +
+  labs(title = "Confluence- A549Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Confluence (%)",
+       color = "Gene",
+       shape = "Biotype") +  # Keep biotype as shape legend
+  theme(strip.text = element_text(size = 10, face = "bold"), text = element_text(size=6), 
+         panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+```
+
+#Save the plot
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/confluence_A549.pdf", 
+       plot = conf_A549, 
+       width = 10, height = 8)
+```
+
+
+################################################################################
+#NCI-H1975 cell line analysis 
+################################################################################
+
+1. Incucyte raw data: green objects and confluence
+
+```{r}
+green_objects_H1975<-read_csv("~/Growth_assays-Incucytedata/Input/green_objects_H1975.csv")
+
+confluence_H1975<-read_csv("~/Growth_assays-Incucytedata/Input/confluence_H1975.csv")
+```
+
+
+#Confluence
+#Excluiding RPS16 g3 given that after 48h we were not able to accurately capture the cell area
+
+2. Average, sd and cv calculation for the two replicates per guide
+```{r}
+#Green objects
+green_objects_H1975_summary<-green_objects_H1975%>%
+  group_by(Time_point, gene, guide, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            cv=(sd_value/mean_value)*100,
+            .groups = "drop")
+
+#Confluence
+co_H1975_summary<-confluence_H1975%>%
+  group_by(Time_point, gene, guide, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            cv=(sd_value/mean_value)*100,
+            .groups = "drop")
+```
+
+3. Plots generation 
+
+```{r}
+#Green objects timeline 
+#Note:Green objects counts were normalized to the value at 12h. At this point the green objects started to be detectable.
+
+#Merging the data from 3 guides per target
+
+#Green objects
+green_objects_H1975_target<-green_objects_H1975%>%
+  group_by(Time_point, gene, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop")
+
+#Confluence
+confluence_H1975_target<-confluence_H1975%>%
+  group_by(Time_point, gene, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop")
+
+
+#Timeline graph:green objects (all targets)
+go_H1975_plot<-ggplot(green_objects_H1975_target, aes(x = Time_point, y = mean_value, color = gene, shape = biotype)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_x_continuous(limits = c(12, 72), breaks = seq(0, 72, by = 6))+
+  scale_y_continuous(limits = c(0, 9), breaks = seq(0, 9, by = 1)) +
+  theme_minimal() +
+  labs(title = "Green objects-NCIH1975Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Green objects count normalized to 12h",
+       color = "Biotype",
+       shape = "Biotype") +  # Keep biotype as shape legend
+  theme(strip.text = element_text(size = 10, face = "bold"), text = element_text(size=6), 
+         panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+#Save the plot
+```{r}
+
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_H1975_all.pdf", 
+       plot = go_H1975_plot, 
+       width = 10, height = 8)
+```
+
+
+```{r}
+#Green objects at 72h (when confluence  for NT and NEG is ~100%)
+
+#TP=72h
+
+# Step 1: Filter and create gene_guide column
+go_filtered_H1975_72 <- green_objects_H1975 %>%
+  filter(Time_point == 72) %>%
+  unite(gene_guide, gene, guide, sep = "_", remove = FALSE)
+
+# Step 2: Summarise mean and SD
+go_filtered_H1975_72_summary <- go_filtered_H1975_72 %>%
+  group_by(gene, guide, biotype) %>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop") %>%
+  unite(gene_guide, gene, guide, sep = "_", remove = FALSE)
+
+# Step 3: Define custom order for biotype
+biotype_order <- c("LncRNA", "Protein-coding gene", "CEG", "NEG", "NTControl2")
+
+# Step 4: Define custom order for gene_guide based on gene & g1-g3
+go_filtered_H1975_72_summary <- go_filtered_H1975_72_summary %>%
+  mutate(
+    guide = factor(guide, levels = c("g3", "g2", "g1")),
+    biotype = factor(biotype, levels = biotype_order)
+  ) %>%
+  arrange(biotype, gene, guide) %>%
+  mutate(gene_guide = factor(gene_guide, levels = unique(gene_guide)))
+
+# Match the same factor order in raw data for consistency
+go_filtered_H1975_72 <- go_filtered_H1975_72 %>%
+  mutate(gene_guide = factor(gene_guide, levels = levels(go_filtered_H1975_72_summary$gene_guide)))
+
+# Step 5: Create the plot
+go_H1975_plot_72 <- ggplot(go_filtered_H1975_72_summary, aes(x = mean_value, y = gene_guide, fill = biotype)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  geom_errorbar(aes(xmin = mean_value - sd_value, xmax = mean_value + sd_value),
+                width = 0.3) +
+  geom_point(data = go_filtered_H1975_72,
+             aes(x = value, y = gene_guide),
+             color = "black", size = 1.5,
+             position = position_jitter(width = 0.1, height = 0.1)) +
+  scale_x_continuous(limits = c(0, 10.5))+
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Green Objects - H1975Cas13d cell line - 72hours",
+    x = "Green Objects (Value at 72 Hours)",
+    y = "Gene_Guide",
+    fill = "Biotype"
+  ) +
+  scale_fill_brewer(palette = "Set2", drop = FALSE) +
+  theme(
+    axis.text.y = element_text(face = "italic"),
+    legend.position = "top"
+  )
+
+```
+
+#Save the plot
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_H1975_72.pdf", 
+       plot = go_H1975_plot_72, 
+       width = 10, height = 8)
+```
+
+```{r warning=FALSE}
+#Confluence Plot (CEG, NEG, NTControl2)
+
+confluence_H1975_filtered<- confluence_H1975_target %>% 
+  filter(biotype %in% c("NEG", "CEG", "NTControl2"))
+
+#Confluence Plot
+conf_H1975<-ggplot(confluence_H1975_filtered, aes(x = Time_point, y = mean_value, color = gene, shape = biotype)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_x_continuous(limits = c(0, 72), breaks = seq(0, 72, by = 6))+
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10)) +
+  theme_minimal() +
+  labs(title = "Confluence- H1975Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Confluence (%)",
+       color = "Gene",
+       shape = "Biotype") +  # Keep biotype as shape legend
+  theme(strip.text = element_text(size = 10, face = "bold"), text = element_text(size=6), 
+         panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+#Save the plot
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/confluence_H1975.pdf", 
+       plot = conf_H1975, 
+       width = 10, height = 8)
+```
+
+################################################################################
+#NCI-H1299 cell line analysis 
+################################################################################
+
+
+1. Incucyte raw data: green objects and confluence
+
+```{r}
+green_objects_H1299<-read_csv("~/Growth_assays-Incucytedata/Input/green_objects_H1299.csv")
+
+confluence_H1299<-read_csv("~/Growth_assays-Incucytedata/Input/confluence_H1299.csv")
+```
+
+
+2. Average, sd and cv calculation for the two replicates per guide
+
+```{r}
+#Green objects
+green_objects_H1299_summary<-green_objects_H1299%>%
+  group_by(Time_point, gene, guide, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            cv=(sd_value/mean_value)*100,
+            .groups = "drop")
+#Confluence
+confluence_H1299_summary<-confluence_H1299%>%
+  group_by(Time_point, gene, guide)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            cv=(sd_value/mean_value)*100,
+            .groups = "drop")
+```
+
+3. Plots generation 
+
+```{r}
+#Green objects timeline 
+#Note:Green objects counts were normalized to the value at 12h. At this point the green objects started to be detectable.
+
+#Merging the data from 3 guides per target
+
+#Green objects
+green_objects_H1299_target<-green_objects_H1299%>%
+  group_by(Time_point, gene, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop")
+
+#Confluence
+confluence_H1299_target<-confluence_H1299%>%
+  group_by(Time_point, gene, biotype)%>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop")
+
+
+#Timeline graph:green objects
+go_H1299_plot<-ggplot(green_objects_H1299_target, aes(x = Time_point, y = mean_value, color = gene, shape = biotype)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_x_continuous(limits = c(12, 48), breaks = seq(0, 48, by = 6))+
+  scale_y_continuous(limits = c(0, 7), breaks = seq(0, 7, by = 1)) +
+  theme_minimal() +
+  labs(title = "Green objects-H1299Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Green objects count normalized to 12h",
+       color = "Gene",
+       shape= "Biotype") +  
+  theme(strip.text = element_text(size = 10, face = "bold"), text = element_text(size=6), 
+         panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+#Save the plot
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_H1299_all.pdf", 
+       plot = go_H1299_plot, 
+       width = 10, height = 8)
+```
+
+#Paper selected targets
+```{r}
+green_objects_H1299_paper<- green_objects_H1299_target%>%
+  filter(Time_point<=48, 
+  gene %in% c("NTControl2", "DTX2", "RPS16", "PPIA.TR1","PPIA.TR2", "SNHG6.TR1", "SNHG6.TR2","SNHG15"))  
+
+# Ensure Time_point is numeric
+green_objects_H1299_paper <- green_objects_H1299_paper %>%
+  mutate(Time_point = as.numeric(as.character(Time_point)))
+
+# Define shapes manually
+shape_mapping <- c("NTControl2" = 15,  # square
+                   "NEG" = 17,        # triangle
+                   "CEG" = 16,        # circle
+                   "LncRNA" = 18,      # diamond 
+                   "Protein-coding gene"= 24 )    
+
+# Prepare labels: take the last time point for each gene
+labels_on_line <- green_objects_H1299_paper %>%
+  group_by(gene) %>%
+  filter(Time_point == max(Time_point)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(label_x = Time_point + 0.5)  # small offset to the right
+
+# Plot
+go_H1299_plot_paper<-ggplot(green_objects_H1299_paper, aes(x = Time_point, y = mean_value, color = gene, group = gene)) +
+  geom_line() +
+  geom_point(aes(shape = biotype), size = 4) +
+  scale_shape_manual(values = shape_mapping) +
+  geom_text(data = labels_on_line,
+            aes(x = label_x, y = mean_value, label = gene),
+            hjust = 0, size = 4, show.legend = FALSE) +
+  scale_x_continuous(limits = c(12, 50), breaks = seq(12, 48, by = 6)) +  # extend limit to show labels
+  scale_y_continuous(limits = c(0, 7), breaks = seq(0, 7, by = 1)) +
+  theme_minimal() +
+  labs(title = "Green objects-H1299Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Green objects count normalized to 12h",
+       color = "Gene",
+       shape = "Biotype") +
+  theme(strip.text = element_text(size = 12, face = "bold"),
+        text = element_text(size = 12),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
+```
+
+
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_H1299_paper.pdf", 
+       plot = go_H1299_plot_paper, 
+       width = 10, height = 8)
+
+```
+
+Barplot 
+```{r}
+#Green objects at 48h (when confluence  for NT and NEG is ~100%)
+
+#TP=48h
+
+# Step 1: Filter and create gene_guide column
+go_filtered_H1299_48 <- green_objects_H1299 %>%
+  filter(Time_point == 48) %>%
+  unite(gene_guide, gene, guide, sep = "_", remove = FALSE)
+
+# Step 2: Summarise mean and SD
+go_filtered_H1299_48_summary <- go_filtered_H1299_48 %>%
+  group_by(gene, guide, biotype) %>%
+  summarise(mean_value = mean(value),
+            sd_value = sd(value),
+            .groups = "drop") %>%
+  unite(gene_guide, gene, guide, sep = "_", remove = FALSE)
+
+# Step 3: Define custom order for biotype
+biotype_order <- c("LncRNA", "Protein-coding gene", "CEG", "NEG", "NTControl2")
+
+# Step 4: Define custom order for gene_guide based on gene & g1-g3
+go_filtered_H1299_48_summary <- go_filtered_H1299_48_summary %>%
+  mutate(
+    guide = factor(guide, levels = c("g3", "g2", "g1")),
+    biotype = factor(biotype, levels = biotype_order)
+  ) %>%
+  arrange(biotype, gene, guide) %>%
+  mutate(gene_guide = factor(gene_guide, levels = unique(gene_guide)))
+
+# Match the same factor order in raw data for consistency
+go_filtered_H1299_48 <- go_filtered_H1299_48 %>%
+  mutate(gene_guide = factor(gene_guide, levels = levels(go_filtered_H1299_48_summary$gene_guide)))
+
+# Step 5: Create the plot
+go_H1299_plot_48 <- ggplot(go_filtered_H1299_48_summary, aes(x = mean_value, y = gene_guide, fill = biotype)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  geom_errorbar(aes(xmin = mean_value - sd_value, xmax = mean_value + sd_value),
+                width = 0.3) +
+  geom_point(data = go_filtered_H1299_48,
+             aes(x = value, y = gene_guide),
+             color = "black", size = 1.5,
+             position = position_jitter(width = 0.1, height = 0.1)) +
+  scale_x_continuous(limits = c(0, 10)) + 
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Green Objects - H1299Cas13d cell line - 48 hours",
+    x = "Green Objects (Value at 48 Hours)",
+    y = "Gene_Guide",
+    fill = "Biotype"
+  ) +
+  scale_fill_brewer(palette = "Set2", drop = FALSE) +
+  theme(
+    axis.text.y = element_text(face = "italic"),
+    legend.position = "top"
+  )
+
+```
+
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/go_H1299_48.pdf", 
+       plot = go_H1299_plot_48, 
+       width = 10, height = 8)
+
+```
+
+
+```{r warning=FALSE}
+#Confluence Plot
+
+#Confluence Plot (CEG, NEG, NTControl2)
+confluence_H1299_filtered<- confluence_H1299_target %>% 
+  filter(biotype %in% c("NEG", "CEG", "NTControl2"))
+
+conf_H1299<-ggplot(confluence_H1299_filtered, aes(x = Time_point, y = mean_value, color = gene, shape = biotype)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_x_continuous(limits = c(0, 48), breaks = seq(0, 48, by = 6))+
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10)) +
+  theme_minimal() +
+  labs(title = "Confluence- H1299Cas13d cell line",
+       x = "Time Point (hr)",
+       y = "Confluence (%)",
+       color = "Gene",
+       shape = "Biotype") +  # Keep biotype as shape legend
+  theme(strip.text = element_text(size = 10, face = "bold"), text = element_text(size=6), 
+         panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+#Save the plot
+```{r}
+ggsave(filename = "~/Growth_assays-Incucytedata/Output/confluence_H1299.pdf", 
+       plot = conf_H1299, 
+       width = 10, height = 8)
+```
+
+
+#Statistical analysis 
+
+```{r warning=FALSE}
+#A549 cell line
+confluence_A549_filtered_stats<-confluence_A549%>%
+  filter (Time_point==48)%>%
+  filter (gene %in% c("GAPDH", "DTX2", "NTControl2", "RPS16", "KRT86"))
+
+genes <- c("GAPDH", "DTX2", "RPS16", "KRT86")
+
+stat_results_A549 <- data.frame(
+  Gene = character(),
+  MeanGene = numeric(),
+  MeanControl = numeric(),
+  t_stat = numeric(),
+  df = numeric(),
+  p_value = numeric(),
+  stringsAsFactors = FALSE
+)
+
+for(g in genes){
+  gene_values <- confluence_A549_filtered_stats$value[confluence_A549_filtered_stats$gene == g]
+  control_values <- confluence_A549_filtered_stats$value[confluence_A549_filtered_stats$gene == "NTControl2"]
+  
+  test <- t.test(gene_values, control_values, var.equal = FALSE)  # Welch t-test
+  
+  stat_results_A549<- rbind(stat_results_A549, data.frame(
+    Gene = g,
+    MeanGene = mean(gene_values),
+    MeanControl = mean(control_values),
+    t_stat = test$statistic,
+    df = test$parameter,
+    p_value = test$p.value
+  ))
+}
+
+#Results
+
+stat_results_A549$p_adj <- p.adjust(stat_results_A549$p_value, method = "BH")  # Benjamini-Hochberg FDR
+
+
+#NCI-H1299 cell line
+
+confluence_H1299_filtered_stats<-confluence_H1299%>%
+  filter (Time_point==48)%>%
+  filter (gene %in% c("GAPDH", "DTX2", "NTControl2", "RPS16", "KRT86"))
+
+genes <- c("GAPDH", "DTX2", "RPS16", "KRT86")
+
+stat_results_H1299<- data.frame(
+  Gene = character(),
+  MeanGene = numeric(),
+  MeanControl = numeric(),
+  t_stat = numeric(),
+  df = numeric(),
+  p_value = numeric(),
+  stringsAsFactors = FALSE
+)
+
+for(g in genes){
+  gene_values <- confluence_H1299_filtered_stats$value[confluence_H1299_filtered_stats$gene == g]
+  control_values <- confluence_H1299_filtered_stats$value[confluence_H1299_filtered_stats$gene == "NTControl2"]
+  
+  test <- t.test(gene_values, control_values, var.equal = FALSE)  # Welch t-test
+  
+  stat_results_H1299<- rbind(stat_results_H1299, data.frame(
+    Gene = g,
+    MeanGene = mean(gene_values),
+    MeanControl = mean(control_values),
+    t_stat = test$statistic,
+    df = test$parameter,
+    p_value = test$p.value
+  ))
+}
+
+#Results
+
+stat_results_H1299$p_adj <- p.adjust(stat_results_H1299$p_value, method = "BH")  # Benjamini-Hochberg FDR
+
+```
+
+
+```{r warning=FALSE}
+sessionInfo()
+```
+
