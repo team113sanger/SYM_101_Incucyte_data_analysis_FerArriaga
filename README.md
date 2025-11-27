@@ -4,42 +4,15 @@ Overview
 
 This project contains an R Markdown workflow for processing and visualizing Incucyte growth assay data across 
 multiple cell lines (A549, H1975, and H1299).
+
 The script loads raw Incucyte outputs, summarizes replicate values, and generates a series of plots including:
 
-    -Green object (GFP-positive cell) timelines
-
-    -Confluence timelines
-
-    -Barplots at endpoint time points
-
-    -Basic statistical comparisons
-
+    a) Green objects (GFP-positive cells) t
+    b) Confluence over time 
+    d) Barplots (guide level) at endpoint time points
+    e) Statistical comparison between CEG and NEG confluence 
+    
 All results are saved in the Output/ directory.
-
-Requirements
-
-R (version ≥ 4.0 recommended)
-
-Packages:
-
-FSA
-
-gridExtra
-
-reshape
-
-ggpubr
-
-tidyverse
-
-dplyr
-
-ggplot2
-
-readxl
-
-The project used renv to manage package versions.
-
 
 Input Data
 
@@ -55,12 +28,6 @@ confluence_<cell_line>.csv – Confluence measurements for each cell line
 
 
 Output
-
-Timeline plots of green objects per target and biotype
-
-Barplots of green objects at the final time point
-
-Confluence plots for selected biotypes
 
 All plots are saved as PDF in ~/Growth_assays-Incucytedata/Output/
 
