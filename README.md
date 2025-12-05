@@ -1,8 +1,9 @@
 # **Live-cell growth assays: Incucyte Graphs at Guide Level**
+This repository is a sub-repository that forms part of the analysis for the manuscript:  *"Uncovering RNA Dependencies in Lung Cancer through CRISPR–Cas13d Functional Genomics"*
 
 ## Overview
 
-This project contains an R Markdown workflow for processing and visualizing Incucyte growth assay data across 
+This repository contains an R Markdown workflow for processing and visualizing the Incucyte growth assay data across 
 multiple cell lines (A549, H1975, and H1299).
 
 The script loads raw Incucyte outputs, summarizes replicate values, and generates a series of plots including:
@@ -14,11 +15,13 @@ The script loads raw Incucyte outputs, summarizes replicate values, and generate
     
 All results are saved in the Output/ directory.
 
+## Project structure 
+
+## Required Software and environment 
+
 ## Input Data
 
-Place all raw files into:
-
-~/Growth_assays-Incucytedata/Input/
+./Input/
 
 Targets_biotype.xlsx – Biotype assignment per target
 
@@ -27,7 +30,7 @@ green_objects_<cell_line>.csv – Raw green object counts for each cell line
 confluence_<cell_line>.csv – Confluence measurements for each cell line
 
 
-## Output
+## Output files 
 
 All plots are saved as PDF in ~/Growth_assays-Incucytedata/Output/
 
