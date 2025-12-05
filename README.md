@@ -1,6 +1,6 @@
-#**Live-cell growth assays: Incucyte Graphs at Guide Level**
+# **Live-cell growth assays: Incucyte Graphs at Guide Level**
 
-##Overview
+## Overview
 
 This project contains an R Markdown workflow for processing and visualizing Incucyte growth assay data across 
 multiple cell lines (A549, H1975, and H1299).
@@ -14,7 +14,7 @@ The script loads raw Incucyte outputs, summarizes replicate values, and generate
     
 All results are saved in the Output/ directory.
 
-##Input Data
+## Input Data
 
 Place all raw files into:
 
@@ -27,12 +27,12 @@ green_objects_<cell_line>.csv – Raw green object counts for each cell line
 confluence_<cell_line>.csv – Confluence measurements for each cell line
 
 
-##Output
+## Output
 
 All plots are saved as PDF in ~/Growth_assays-Incucytedata/Output/
 
 
-##*Notes*
+## *Notes*
 
 Green object counts are normalized to the 12h time point.
 
