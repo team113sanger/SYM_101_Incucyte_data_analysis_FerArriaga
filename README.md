@@ -7,6 +7,7 @@ This repository contains an R Markdown workflow for processing and visualizing I
 
 ## Project structure 
 
+```r
 Growth_assays-Incucytedata/
 ├── Input/
 ├── Output/ 
@@ -15,6 +16,7 @@ Growth_assays-Incucytedata/
 ├── Growth_assays-Incucytedata.Rproj 
 ├── README.md 
 └── renv.lock 
+```
 
 ## Required Software and environment 
 
