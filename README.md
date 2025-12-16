@@ -36,21 +36,31 @@ To set up the environment:
 ```r
 install.packages("renv")
 renv::restore()
+```
 
 ## Input Data
 
-./Input/
+This analysis was performed using data obtained from the **IncuCyte S3 Live-Cell Analysis System** (Sartorius).
 
-Targets_biotype.xlsx – Biotype assignment per target
+Green object counts were quantified and normalized to the **12-hour time point** using the IncuCyte software.
 
-green_objects_<cell_line>.csv – Raw green object counts for each cell line
+All input data are located in the `Input/` directory:
 
-confluence_<cell_line>.csv – Confluence measurements for each cell line
+### Files
+
+- **Targets_biotype.xlsx**  
+  Assigns biotypes to each target.
+
+- **green_objects_<cell_line>.csv**  
+  Raw green object counts for each cell line.
+
+- **confluence_<cell_line>.csv**  
+  Confluence measurements for each cell line.
 
 
 ## Output files 
 
-All plots are saved as PDF in ~/Growth_assays-Incucytedata/Output/
+All output plots are saved as PDF files in the `Output/` directory
 
 
 ## *Notes*
