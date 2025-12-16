@@ -19,6 +19,24 @@ All results are saved in the Output/ directory.
 
 ## Required Software and environment 
 
+- **R** (version **4.5.0 or later**)
+- **R packages**:
+  - tidyverse
+  - readxl
+  - FSA
+  - ggpubr
+  - gridExtra
+  - reshape
+
+This project uses the **`renv`** package to manage R package dependencies and ensure reproducibility.
+All required package versions are recorded in the `renv.lock` file.
+
+To set up the environment:
+
+```r
+install.packages("renv")
+renv::restore()
+
 ## Input Data
 
 ./Input/
