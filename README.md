@@ -3,17 +3,7 @@ This repository is a sub-repository that forms part of the analysis for the manu
 
 ## Overview
 
-This repository contains an R Markdown workflow for processing and visualizing the Incucyte growth assay data across 
-multiple cell lines (A549, H1975, and H1299).
-
-The script loads raw Incucyte outputs, summarizes replicate values, and generates a series of plots including:
-
-    - Green objects (GFP-positive cells) 
-    - Confluence over time 
-    - Barplots (guide level) at endpoint time points
-    - Statistical comparison between CEG and NEG confluence 
-    
-All results are saved in the Output/ directory.
+This repository contains an R Markdown workflow for processing and visualizing IncuCyte growth assay data across multiple cell lines (A549Cas13d, H1975Cas13d, and H1299Cas13d) for target validation.
 
 ## Project structure 
 
@@ -60,9 +50,19 @@ All input data are located in the `Input/` directory:
 
 ## Output files 
 
-All output plots are saved as PDF files in the `Output/` directory
+All output plots are saved as PDF files in the `Output/` directory.
 
+- **Confluence plots**  
+  Confluence after 48 h for the A549Cas13d and H1299Cas13d cell lines, and after 72 h for the H1975Cas13d cell line, showing values for CEG, NEG, and NT control.  
+  Values from the three guides targeting the same gene were averaged.
 
+- **Green object bar plots (guide level)**  
+  Counts of GFP-positive cells at the guide level. Each bar represents the mean across technical replicates (n = 2), with error bars indicating standard deviation (SD).
+
+- **Green object counts per target**  
+  GFP-positive cell counts summarized at the target level, showing the impact of targeting different transcripts on cell growth.  
+  Values from the three guides targeting the same gene were averaged.
+  
 ## *Notes*
 
 Green object counts are normalized to the 12h time point.
