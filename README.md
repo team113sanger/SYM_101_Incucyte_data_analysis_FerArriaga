@@ -7,6 +7,8 @@ This repository contains an R Markdown workflow for processing and visualizing I
 
 ## Project structure 
 
+
+
 ## Required Software and environment 
 
 - **R** (version **4.5.0 or later**)
@@ -55,6 +57,8 @@ All output plots are saved as PDF files in the `Output/` directory.
 - **Confluence plots**  
   Confluence after 48 h for the A549Cas13d and H1299Cas13d cell lines, and after 72 h for the H1975Cas13d cell line, showing values for CEG, NEG, and NT control.  
   Values from the three guides targeting the same gene were averaged.
+  **Statistical analysis:** Confluence at 48 h was compared between targeted genes (GAPDH, DTX2, RPS16, KRT86) and NT controls for A549Cas13d and NCI-H1299Cas13d using Welch's t-test.
+  p-values were adjusted with the Benjamini-Hochberg method.
 
 - **Green object bar plots (guide level)**  
   Counts of GFP-positive cells at the guide level. Each bar represents the mean across technical replicates (n = 2), with error bars indicating standard deviation (SD).
@@ -62,6 +66,8 @@ All output plots are saved as PDF files in the `Output/` directory.
 - **Green object counts per target**  
   GFP-positive cell counts summarized at the target level, showing the impact of targeting different transcripts on cell growth.  
   Values from the three guides targeting the same gene were averaged.
+
+ 
   
 ## *Notes*
 
